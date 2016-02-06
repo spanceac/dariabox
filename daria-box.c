@@ -141,6 +141,19 @@ void get_file_name_from_nr(char *file_name, int nr)
     strcpy(file_name, fno.fname);
 }
 
+void wait_btn_release(void)
+{
+    int high_time_10ms = 0;
+    //wait for button signal to be high for 30ms to call it a release
+    while(high_time_10ms < 3)
+    {
+        delay_ms(10);
+        if(PORTBbits.RB3)
+            high_time_10ms++;
+        else
+            high_time_10ms = 0;
+    }
+}
 void main(void)
 {
     int ret, i, nr_of_files, rand_seed, nr, rand_nr, throw_nr, swap;
@@ -218,10 +231,18 @@ void main(void)
                 PORTBbits.RB1 = 0;
                 pf_read(read_buffer, 512, &br);
                 PORTBbits.RB1 = 1;
-                //if we read less than a sector, or the next button was pressed
-                if(br < 512 || PORTBbits.RB3 == 0)
+                //if we read less than a sector, jump to next song
+                if(br < 512)
                 {
                     stop_playing = 1;
+                    break;
+                }
+                
+                // if the next button was pressed jump to next song
+                if(PORTBbits.RB3 == 0)
+                {
+                    stop_playing = 1;
+                    wait_btn_release();
                     break;
                 }
 
